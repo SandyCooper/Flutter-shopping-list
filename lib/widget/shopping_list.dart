@@ -27,33 +27,47 @@ class _ShoppingListState extends State<ShoppingList> {
   void loadItem() async {
     final url = Uri.https(
         "flutter-test-63344-default-rtdb.firebaseio.com", "shopping-List.json");
-    final response = await http.get(url);
-    if (response.statusCode >= 400) {
-      setState(() {
-        error = "Failed to fetch data, Please try again later.";
-      });
-    }
-    final Map<String, dynamic> listData = json.decode(response.body);
-    final List<GroceryItem> loadedItem = [];
-    for (final item in listData.entries) {
-      final category = categories.entries
-          .firstWhere(
-              (catItem) => catItem.value.category == item.value["category"])
-          .value;
-      loadedItem.add(
-        GroceryItem(
-          id: item.key,
-          name: item.value["name"],
-          quantity: item.value["quantity"],
-          category: category,
-        ),
-      );
-    }
+    try {
+      final response = await http.get(url);
+      if (response.statusCode >= 400) {
+        setState(() {
+          error = "Failed to fetch data, Please try again later.";
+        });
+      }
 
-    setState(() {
-      groceryItem = loadedItem;
-      isLoading = false;
-    });
+      if (response.body == "null") {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final Map<String, dynamic> listData = json.decode(response.body);
+      final List<GroceryItem> loadedItem = [];
+      for (final item in listData.entries) {
+        final category = categories.entries
+            .firstWhere(
+                (catItem) => catItem.value.category == item.value["category"])
+            .value;
+        loadedItem.add(
+          GroceryItem(
+            id: item.key,
+            name: item.value["name"],
+            quantity: item.value["quantity"],
+            category: category,
+          ),
+        );
+      }
+
+      setState(() {
+        groceryItem = loadedItem;
+        isLoading = false;
+      });
+    } catch (err) {
+      setState(() {
+          error = "Something went wrong, Please try again later.";
+        });
+    }
   }
 
   void addItem() async {
